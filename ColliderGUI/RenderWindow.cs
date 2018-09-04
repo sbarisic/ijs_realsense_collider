@@ -8,6 +8,9 @@ using System.Numerics;
 using FishGfx;
 using FishGfx.Graphics;
 using FishGfx.System;
+using FishGfx.Graphics.Drawables;
+using FishGfx.Formats;
+
 using RWnd = FishGfx.Graphics.RenderWindow;
 
 namespace ColliderGUI {
@@ -29,6 +32,7 @@ namespace ColliderGUI {
 
 			Console.WriteLine(ConsoleColor.Green, "Running {0}", RenderAPI.Version);
 			Console.WriteLine(ConsoleColor.Green, RenderAPI.Renderer);
+			Console.LogWriteLine("OpenGL Extensions:\n    {0}", string.Join("\n    ", RenderAPI.Extensions));
 
 			RWnd.CaptureCursor = true;
 			RWnd.OnMouseMoveDelta += (Wnd, X, Y) => {
@@ -54,6 +58,7 @@ namespace ColliderGUI {
 			};
 
 			SetupCamera();
+			LoadAssets();
 		}
 
 		static void SetupCamera() {
@@ -63,6 +68,22 @@ namespace ColliderGUI {
 			Cam.SetPerspective(RWnd.WindowSize.X, RWnd.WindowSize.Y);
 			Cam.Position = new Vector3(50, 50, 50);
 			Cam.LookAt(new Vector3(0, 0, 0));
+		}
+
+		static ShaderProgram Default;
+		static ShaderProgram DefaultFlatColor;
+		static RenderModel Cube;
+
+		static void LoadAssets() {
+			Default = new ShaderProgram(new ShaderStage(ShaderType.VertexShader, "data/default3d.vert"),
+				new ShaderStage(ShaderType.FragmentShader, "data/default.frag"));
+
+			DefaultFlatColor = new ShaderProgram(new ShaderStage(ShaderType.VertexShader, "data/default3d.vert"),
+				new ShaderStage(ShaderType.FragmentShader, "data/defaultFlatColor.frag"));
+
+			Cube = new RenderModel(Obj.Load("data/models/cube/cube.obj"));
+			Cube.SetMaterialTexture("cube", Texture.FromFile("data/textures/grid.png"));
+			Cube.Matrix = Matrix4x4.CreateScale(new Vector3(500, 5, 500));
 		}
 
 		public static bool Tick() {
@@ -77,6 +98,7 @@ namespace ColliderGUI {
 
 			Update(Dt);
 
+			ShaderUniforms.Model = Matrix4x4.Identity;
 			Gfx.Clear();
 			Draw(Dt);
 			RWnd.SwapBuffers();
@@ -95,7 +117,7 @@ namespace ColliderGUI {
 		}
 
 		static void Draw(float Dt) {
-
+			Cube.Draw(Default);
 		}
 	}
 }

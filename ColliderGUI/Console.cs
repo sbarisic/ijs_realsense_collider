@@ -6,6 +6,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
+using System.Globalization;
 using Microsoft.Win32.SafeHandles;
 using _Console = System.Console;
 
@@ -15,7 +16,13 @@ namespace ColliderGUI {
 		static IntPtr CONIN;
 		static IntPtr CONOUT;
 
+		static StreamWriter LogFile;
+
 		public static void Spawn(bool Spawn) {
+			LogFile = new StreamWriter(File.Open("log.txt", FileMode.Create));
+			LogFile.AutoFlush = true;
+			LogWriteLine("Log created on {0}", DateTime.Now.ToString("dd. MM. yyyy. HH:mm:ss", CultureInfo.InvariantCulture));
+
 			if (!Spawn)
 				return;
 
@@ -41,6 +48,9 @@ namespace ColliderGUI {
 		}
 
 		public static void Write(string Msg) {
+			LogFile.Write(Msg);
+			LogFile.Flush();
+
 			if (!ConsoleExists)
 				return;
 
@@ -67,6 +77,16 @@ namespace ColliderGUI {
 
 		public static void WriteLine(ConsoleColor Clr, string Fmt, params object[] Args) {
 			WriteLine(Clr, string.Format(Fmt, Args));
+		}
+
+		public static void LogWriteLine(string Msg) {
+			LogFile.WriteLine(Msg);
+			LogFile.Flush();
+		}
+
+		public static void LogWriteLine(string Fmt, params object[] Args) {
+			LogFile.WriteLine(string.Format(Fmt, Args));
+			LogFile.Flush();
 		}
 	}
 }
