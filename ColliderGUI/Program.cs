@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using RealsenseCollider;
+using FishGfx;
+using FishGfx.Graphics;
+using FishGfx.System;
 
 namespace ColliderGUI {
 	class Program {
