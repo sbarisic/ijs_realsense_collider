@@ -11,7 +11,7 @@ using FishGfx.System;
 namespace ColliderGUI {
 	class Program {
 		static void Main(string[] args) {
-			Kernel32.SetDllDirectory("x64");
+			//Kernel32.SetDllDirectory("x64");
 
 			Console.WriteLine("Done!");
 			Console.ReadLine();

@@ -51,7 +51,7 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <Content Include="x64\realsense2.dll">
+    <Content Include="realsense2.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
