@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2042
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealsenseCollider", "RealsenseCollider\RealsenseCollider.csproj", "{98B7C9F1-0E3E-46E0-AFF2-9450498AE099}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColliderGUI", "ColliderGUI\ColliderGUI.csproj", "{6693819A-12DC-48F7-9BEE-74F5DAD67C64}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{98B7C9F1-0E3E-46E0-AFF2-9450498AE099}.Debug|x64.ActiveCfg = Debug|x64
+		{98B7C9F1-0E3E-46E0-AFF2-9450498AE099}.Debug|x64.Build.0 = Debug|x64
+		{98B7C9F1-0E3E-46E0-AFF2-9450498AE099}.Release|x64.ActiveCfg = Release|x64
+		{98B7C9F1-0E3E-46E0-AFF2-9450498AE099}.Release|x64.Build.0 = Release|x64
+		{6693819A-12DC-48F7-9BEE-74F5DAD67C64}.Debug|x64.ActiveCfg = Debug|x64
+		{6693819A-12DC-48F7-9BEE-74F5DAD67C64}.Debug|x64.Build.0 = Debug|x64
+		{6693819A-12DC-48F7-9BEE-74F5DAD67C64}.Release|x64.ActiveCfg = Release|x64
+		{6693819A-12DC-48F7-9BEE-74F5DAD67C64}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0161E5E7-A918-45AF-9738-A8B2BE8DE3FD}
+	EndGlobalSection
+EndGlobal
