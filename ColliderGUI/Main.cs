@@ -15,6 +15,8 @@ namespace ColliderGUI {
 			Console.Spawn(Args.Contains("--console"));
 			RenderWindow.Init(60);
 
+
+
 			while (RenderWindow.Tick()) {
 				// Additional logic which should execute per-frame goes here
 			}

@@ -23,6 +23,9 @@ namespace ColliderGUI {
 		static Camera Cam;
 		static Vector3 MoveVec;
 
+		const float Treadmill_X = 1200;
+		const float Treadmill_Z = 2000;
+
 		public static void Init(float TargetFramerate) {
 			Framerate = TargetFramerate;
 			Console.WriteLine(ConsoleColor.DarkCyan, "Target framerate: {0} FPS", TargetFramerate);
@@ -66,8 +69,8 @@ namespace ColliderGUI {
 			Cam.MouseMovement = true;
 
 			Cam.SetPerspective(RWnd.WindowSize.X, RWnd.WindowSize.Y);
-			Cam.Position = new Vector3(0, 0, 500);
-			//Cam.LookAt(new Vector3(0, 0, 0));
+			Cam.Position = new Vector3(-50, 100, -50);
+			Cam.LookAt(new Vector3(Treadmill_X / 2, 0, Treadmill_Z / 2));
 		}
 
 		static ShaderProgram Default;
@@ -83,7 +86,7 @@ namespace ColliderGUI {
 
 			Cube = new RenderModel(Obj.Load("data/models/cube/cube.obj"));
 			Cube.SetMaterialTexture("cube", Texture.FromFile("data/textures/xy_grid.png"));
-			Cube.Matrix = Matrix4x4.CreateTranslation(new Vector3(0.5f, -0.5f, 0.5f)) * Matrix4x4.CreateScale(new Vector3(500, 5, 500));
+			Cube.Matrix = Matrix4x4.CreateTranslation(new Vector3(0.5f, -0.5f, 0.5f)) * Matrix4x4.CreateScale(new Vector3(Treadmill_X, 5, Treadmill_Z));
 		}
 
 		public static bool Tick() {

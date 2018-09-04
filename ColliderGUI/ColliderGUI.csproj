@@ -52,6 +52,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Voxels.cs" />
     <Compile Include="Console.cs" />
     <Compile Include="Kernel32.cs" />
     <Compile Include="Main.cs" />
