@@ -66,8 +66,8 @@ namespace ColliderGUI {
 			Cam.MouseMovement = true;
 
 			Cam.SetPerspective(RWnd.WindowSize.X, RWnd.WindowSize.Y);
-			Cam.Position = new Vector3(50, 50, 50);
-			Cam.LookAt(new Vector3(0, 0, 0));
+			Cam.Position = new Vector3(0, 0, 500);
+			//Cam.LookAt(new Vector3(0, 0, 0));
 		}
 
 		static ShaderProgram Default;
@@ -82,8 +82,8 @@ namespace ColliderGUI {
 				new ShaderStage(ShaderType.FragmentShader, "data/defaultFlatColor.frag"));
 
 			Cube = new RenderModel(Obj.Load("data/models/cube/cube.obj"));
-			Cube.SetMaterialTexture("cube", Texture.FromFile("data/textures/grid.png"));
-			Cube.Matrix = Matrix4x4.CreateScale(new Vector3(500, 5, 500));
+			Cube.SetMaterialTexture("cube", Texture.FromFile("data/textures/xy_grid.png"));
+			Cube.Matrix = Matrix4x4.CreateTranslation(new Vector3(0.5f, -0.5f, 0.5f)) * Matrix4x4.CreateScale(new Vector3(500, 5, 500));
 		}
 
 		public static bool Tick() {
