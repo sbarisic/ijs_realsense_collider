@@ -3,16 +3,46 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Numerics;
+using FishGfx.Graphics;
+using FishGfx.Graphics.Drawables;
+using FishGfx.Formats;
+using FishGfx;
 
 namespace ColliderGUI {
+	enum VoxelType {
+		None,
+		Solid
+	}
+
+	struct VoxelEntry {
+		public static readonly VoxelEntry None = new VoxelEntry(VoxelType.None);
+
+		public VoxelType Type;
+		public Color Color;
+
+		public VoxelEntry(VoxelType T, Color Clr) {
+			Type = T;
+			Color = Clr;
+		}
+
+		public VoxelEntry(VoxelType T) : this(T, Color.White) {
+		}
+	}
+
 	static class Voxels {
 		static float VoxelSize;
 		static int Width;
 		static int Depth;
 		static int Height;
 
-		static bool[] VoxelArray;
+		static VoxelEntry[] VoxelArray;
 		static bool Dirty;
+
+		static Vertex3[] CubeVerts;
+
+		static List<Vertex3> MeshVerts;
+		public static Mesh3D VoxMesh;
 
 		public static void Init(int Width, int Height, int Depth, float VoxelSize) {
 			Voxels.Width = Width;
@@ -20,7 +50,15 @@ namespace ColliderGUI {
 			Voxels.Depth = Depth;
 			Voxels.VoxelSize = VoxelSize;
 
-			VoxelArray = new bool[Width * Height * Depth];
+			MeshVerts = new List<Vertex3>();
+			VoxMesh = new Mesh3D(BufferUsage.DynamicDraw);
+			VoxelArray = new VoxelEntry[Width * Height * Depth];
+
+			for (int i = 0; i < VoxelArray.Length; i++)
+				VoxelArray[i] = VoxelEntry.None;
+			
+			CubeVerts = Obj.Load("data/models/cube/cube.obj").First().Vertices.ToArray();
+			Dirty = true;
 		}
 
 		static int PosToIdx(int X, int Y, int Z) {
@@ -34,21 +72,28 @@ namespace ColliderGUI {
 			X = Idx % Width;
 		}
 
+		static void WorldCoordToPos(Vector3 WorldCoord, out int X, out int Y, out int Z) {
+			WorldCoord /= VoxelSize;
 
-		public static bool GetVoxel(int X, int Y, int Z) {
+			X = (int)WorldCoord.X;
+			Y = (int)WorldCoord.Y;
+			Z = (int)WorldCoord.Z;
+		}
+
+		public static VoxelEntry GetVoxel(int X, int Y, int Z) {
 			if (X < 0 || X >= Width)
-				return false;
+				return VoxelEntry.None;
 
 			if (Y < 0 || Y >= Height)
-				return false;
+				return VoxelEntry.None;
 
 			if (Z < 0 || Z >= Depth)
-				return false;
+				return VoxelEntry.None;
 
 			return VoxelArray[PosToIdx(X, Y, Z)];
 		}
 
-		public static void SetVoxel(int X, int Y, int Z, bool Vox) {
+		public static void SetVoxel(int X, int Y, int Z, VoxelEntry Vox) {
 			if (X < 0 || X >= Width)
 				return;
 
@@ -59,6 +104,12 @@ namespace ColliderGUI {
 				return;
 
 			VoxelArray[PosToIdx(X, Y, Z)] = Vox;
+			Dirty = true;
+		}
+
+		public static void SetVoxel(Vector3 WorldCoords, VoxelEntry Vox) {
+			WorldCoordToPos(WorldCoords, out int X, out int Y, out int Z);
+			SetVoxel(X, Y, Z, Vox);
 		}
 
 		public static void Update() {
@@ -66,13 +117,41 @@ namespace ColliderGUI {
 				return;
 			Dirty = false;
 
+			MeshVerts.Clear();
+
 			for (int i = 0; i < VoxelArray.Length; i++) {
 				IdxToPos(i, out int X, out int Y, out int Z);
+				VoxelEntry T = VoxelEntry.None;
+
+				if (IsSolid(T = GetVoxel(X, Y, Z))) {
+					if (!IsSolid(X + 1, Y, Z) || !IsSolid(X - 1, Y, Z) || !IsSolid(X, Y + 1, Z) || !IsSolid(X, Y - 1, Z) || !IsSolid(X, Y, Z + 1) || !IsSolid(X, Y, Z - 1)) {
+						MeshVerts.AddRange(EmitVoxel(T, X, Y, Z));
+					}
+				}
+			}
+
+			if (MeshVerts.Count > 0)
+				VoxMesh.SetVertices(MeshVerts.ToArray());
+		}
+
+		static IEnumerable<Vertex3> EmitVoxel(VoxelEntry T, int X, int Y, int Z) {
+			for (int i = 0; i < CubeVerts.Length; i++) {
+				Vertex3 V = CubeVerts[i];
+				V.Position = (V.Position + new Vector3(0.5f) + new Vector3(X, Y, Z)) * VoxelSize;
+				V.Color = T.Color;
+				yield return V;
 			}
 		}
 
-		static void EmitVoxel(int X, int Y, int Z) {
+		static bool IsSolid(int X, int Y, int Z) {
+			return IsSolid(GetVoxel(X, Y, Z));
+		}
 
+		static bool IsSolid(VoxelEntry T) {
+			if (T.Type == VoxelType.Solid)
+				return true;
+
+			return false;
 		}
 	}
 }

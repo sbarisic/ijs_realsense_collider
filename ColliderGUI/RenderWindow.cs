@@ -23,10 +23,13 @@ namespace ColliderGUI {
 		static Camera Cam;
 		static Vector3 MoveVec;
 
-		const float Treadmill_X = 1200;
-		const float Treadmill_Z = 2000;
+		static float Treadmill_X;
+		static float Treadmill_Z;
 
-		public static void Init(float TargetFramerate) {
+		public static void Init(float TargetFramerate, float Treadmill_X, float Treadmill_Z) {
+			RenderWindow.Treadmill_X = Treadmill_X;
+			RenderWindow.Treadmill_Z = Treadmill_Z;
+
 			Framerate = TargetFramerate;
 			Console.WriteLine(ConsoleColor.DarkCyan, "Target framerate: {0} FPS", TargetFramerate);
 
@@ -117,10 +120,17 @@ namespace ColliderGUI {
 
 			if (!(MoveVec.X == 0 && MoveVec.Y == 0 && MoveVec.Z == 0))
 				Cam.Position += Cam.ToWorldNormal(Vector3.Normalize(MoveVec)) * MoveSpeed * Dt;
+
+			Voxels.Update();
 		}
 
 		static void Draw(float Dt) {
 			Cube.Draw(Default);
+
+			ShaderUniforms.Model = Matrix4x4.Identity;
+			DefaultFlatColor.Bind();
+			Voxels.VoxMesh.Draw();
+			DefaultFlatColor.Unbind();
 		}
 	}
 }
