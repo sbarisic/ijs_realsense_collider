@@ -31,7 +31,7 @@ namespace ColliderGUI {
 			RenderWindow.Treadmill_Z = Treadmill_Z;
 
 			Framerate = TargetFramerate;
-			Console.WriteLine(ConsoleColor.DarkCyan, "Target framerate: {0} FPS", TargetFramerate);
+			Console.WriteLine(ConsoleColor.Green, "Target framerate: {0} FPS", TargetFramerate);
 
 			Vector2 Res = RWnd.GetDesktopResolution() * 0.9f;
 			RWnd = new RWnd((int)Res.X, (int)Res.Y, nameof(ColliderGUI));
@@ -65,6 +65,8 @@ namespace ColliderGUI {
 
 			SetupCamera();
 			LoadAssets();
+
+			Gfx.PointSize(3);
 		}
 
 		static void SetupCamera() {
@@ -78,7 +80,9 @@ namespace ColliderGUI {
 
 		static ShaderProgram Default;
 		static ShaderProgram DefaultFlatColor;
-		static RenderModel Cube;
+		static RenderModel WorldSurface;
+		static RenderModel Pin;
+		static Mesh3D Points;
 
 		static void LoadAssets() {
 			Default = new ShaderProgram(new ShaderStage(ShaderType.VertexShader, "data/default3d.vert"),
@@ -87,9 +91,31 @@ namespace ColliderGUI {
 			DefaultFlatColor = new ShaderProgram(new ShaderStage(ShaderType.VertexShader, "data/default3d.vert"),
 				new ShaderStage(ShaderType.FragmentShader, "data/defaultFlatColor.frag"));
 
-			Cube = new RenderModel(Obj.Load("data/models/cube/cube.obj"));
-			Cube.SetMaterialTexture("cube", Texture.FromFile("data/textures/xy_grid.png"));
-			Cube.Matrix = Matrix4x4.CreateTranslation(new Vector3(0.5f, -0.5f, 0.5f)) * Matrix4x4.CreateScale(new Vector3(Treadmill_X, 5, Treadmill_Z));
+			/// Load cube
+			WorldSurface = new RenderModel(Obj.Load("data/models/cube/cube.obj"));
+			WorldSurface.SetMaterialTexture("cube", Texture.FromFile("data/textures/xy_grid.png"));
+			WorldSurface.Matrix = Matrix4x4.CreateTranslation(new Vector3(0.5f, -0.5f, 0.5f)) * Matrix4x4.CreateScale(new Vector3(Treadmill_X, 5, Treadmill_Z));
+			WorldSurface.Matrix *= Matrix4x4.CreateTranslation(-Program.WorldOrigin);
+
+			// Load pin
+			GenericMesh[] Meshes = Obj.Load("data/models/biplane/biplane.obj");
+
+			Matrix4x4 RotMat = Matrix4x4.CreateFromYawPitchRoll(-(float)Math.PI, 0, 0);
+			for (int i = 0; i < Meshes.Length; i++)
+				Meshes[i].ForEachPosition((In) => Vector3.Transform(In, RotMat));//*/
+
+			Pin = new RenderModel(Meshes, false, false);
+			Texture WhiteTex = Texture.FromFile("data/textures/colors/white.png");
+			for (int i = 0; i < Meshes.Length; i++) {
+				Pin.SetMaterialTexture(Meshes[i].MaterialName, WhiteTex);
+				Pin.GetMaterialMesh(Meshes[i].MaterialName).DefaultColor = GfxUtils.RandomColor();
+			}
+
+			if (Program.RenderPoints) {
+				// Points
+				Points = new Mesh3D(BufferUsage.StreamDraw);
+				Points.PrimitiveType = PrimitiveType.Points;
+			}
 		}
 
 		public static bool Tick() {
@@ -125,12 +151,26 @@ namespace ColliderGUI {
 		}
 
 		static void Draw(float Dt) {
-			Cube.Draw(Default);
+			WorldSurface.Draw(Default);
 
-			ShaderUniforms.Model = Matrix4x4.Identity;
+			ShaderUniforms.Model = Matrix4x4.CreateTranslation(-Program.WorldOrigin);
 			DefaultFlatColor.Bind();
 			Voxels.VoxMesh.Draw();
 			DefaultFlatColor.Unbind();
+
+			Matrix4x4 TransRot = OptotrakClient.GetRotation() * OptotrakClient.GetTranslation();
+			ShaderUniforms.Model = Matrix4x4.CreateScale(10) * TransRot;
+			Default.Bind();
+			Pin.Draw();
+			Default.Unbind();
+
+			if (Program.RenderPoints) {
+				RealSenseClient.GetVerts(ref Points);
+				ShaderUniforms.Model = Matrix4x4.Identity;
+				DefaultFlatColor.Bind();
+				Points.Draw();
+				DefaultFlatColor.Unbind();
+			}
 		}
 	}
 }

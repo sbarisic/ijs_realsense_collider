@@ -12,6 +12,8 @@ using _Console = System.Console;
 
 namespace ColliderGUI {
 	static class Console {
+		static object Lock = new object();
+
 		static bool ConsoleExists = false;
 		static IntPtr CONIN;
 		static IntPtr CONOUT;
@@ -66,9 +68,11 @@ namespace ColliderGUI {
 		}
 
 		public static void WriteLine(ConsoleColor Clr, string Msg) {
-			SetForeColor(Clr);
-			WriteLine(Msg);
-			SetForeColor();
+			lock (Lock) {
+				SetForeColor(Clr);
+				WriteLine(Msg);
+				SetForeColor();
+			}
 		}
 
 		public static void WriteLine(string Fmt, params object[] Args) {

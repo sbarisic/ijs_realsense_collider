@@ -56,7 +56,8 @@ namespace ColliderGUI {
 
 			for (int i = 0; i < VoxelArray.Length; i++)
 				VoxelArray[i] = VoxelEntry.None;
-			
+			//VoxelArray[i] = new VoxelEntry(VoxelType.Solid, GfxUtils.RandomColor());
+
 			CubeVerts = Obj.Load("data/models/cube/cube.obj").First().Vertices.ToArray();
 			Dirty = true;
 		}
@@ -103,8 +104,12 @@ namespace ColliderGUI {
 			if (Z < 0 || Z >= Depth)
 				return;
 
-			VoxelArray[PosToIdx(X, Y, Z)] = Vox;
-			Dirty = true;
+			int Idx = PosToIdx(X, Y, Z);
+
+			if (VoxelArray[Idx].Type != Vox.Type) {
+				VoxelArray[Idx] = Vox;
+				Dirty = true;
+			}
 		}
 
 		public static void SetVoxel(Vector3 WorldCoords, VoxelEntry Vox) {
@@ -125,7 +130,7 @@ namespace ColliderGUI {
 
 				if (IsSolid(T = GetVoxel(X, Y, Z))) {
 					if (!IsSolid(X + 1, Y, Z) || !IsSolid(X - 1, Y, Z) || !IsSolid(X, Y + 1, Z) || !IsSolid(X, Y - 1, Z) || !IsSolid(X, Y, Z + 1) || !IsSolid(X, Y, Z - 1)) {
-						MeshVerts.AddRange(EmitVoxel(T, X, Y, Z));
+						EmitVoxel(T, X, Y, Z, MeshVerts);
 					}
 				}
 			}
@@ -134,12 +139,13 @@ namespace ColliderGUI {
 				VoxMesh.SetVertices(MeshVerts.ToArray());
 		}
 
-		static IEnumerable<Vertex3> EmitVoxel(VoxelEntry T, int X, int Y, int Z) {
+		static void EmitVoxel(VoxelEntry T, int X, int Y, int Z, List<Vertex3> Verts) {
 			for (int i = 0; i < CubeVerts.Length; i++) {
 				Vertex3 V = CubeVerts[i];
 				V.Position = (V.Position + new Vector3(0.5f) + new Vector3(X, Y, Z)) * VoxelSize;
 				V.Color = T.Color;
-				yield return V;
+
+				Verts.Add(V);
 			}
 		}
 
