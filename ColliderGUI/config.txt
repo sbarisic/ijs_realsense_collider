@@ -1,0 +1,11 @@
+﻿MarkDirtyAuto = true
+UseThreading = false
+
+RealSenseEnabled = false
+RenderPoints = false
+RenderVoxels = false
+
+Treadmill_X = 1200
+Treadmill_Y = 500
+Treadmill_Z = 2000
+VoxelSize = 15

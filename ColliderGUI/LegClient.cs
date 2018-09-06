@@ -53,11 +53,14 @@ namespace ColliderGUI {
 			byte[] Bytes = ReceiveRaw();
 
 			R_Start = Transform(new Vector3(GetFloat(Bytes, 0), GetFloat(Bytes, 1), GetFloat(Bytes, 2)));
-			R_End = Transform(new Vector3(GetFloat(Bytes, 3), GetFloat(Bytes, 4), GetFloat(Bytes, 5)));
+			L_Start = Transform(new Vector3(GetFloat(Bytes, 3), GetFloat(Bytes, 4), GetFloat(Bytes, 5)));
+
+			R_End = Transform(new Vector3(GetFloat(Bytes, 6), GetFloat(Bytes, 7), GetFloat(Bytes, 8)));
+			L_End = Transform(new Vector3(GetFloat(Bytes, 9), GetFloat(Bytes, 10), GetFloat(Bytes, 11)));
 		}
 
 		static Vector3 Transform(Vector3 In) {
-			return In.YZX() + OptotrakClient.GetPos() - Program.CameraHeight;
+			return In.YZX() + OptotrakClient.GetPos() - Program.CameraHeight + Program.WorldOrigin;
 		}
 	}
 }

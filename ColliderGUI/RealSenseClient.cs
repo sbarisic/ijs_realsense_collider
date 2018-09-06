@@ -135,7 +135,7 @@ namespace ColliderGUI {
 					Vertex3 Vert = Verts[i];
 					Vert.Position = Vector3.Transform((Vert.Position * 1000), TransMat);
 
-					if (Vector3.Distance(CamPos, Vert.Position) < 1000)
+					if (Vector3.Distance(CamPos, Vert.Position) < 500)
 						continue;
 
 					Vert.Color = Clr.GetPixel(Vert.UV, false);
@@ -151,16 +151,31 @@ namespace ColliderGUI {
 					Voxels.SetVoxel(WorldPos, new VoxelEntry(VoxelType.Solid, Vert.Color));
 				}
 
-				Voxels.Cast(LegClient.R_Start, LegClient.R_End, (X, Y, Z) => {
-					Voxels.SetVoxel(X, Y, Z, new VoxelEntry(VoxelType.Solid, Color.Red));
+				RightLegCollides = !Voxels.Ray(LegClient.R_Start, LegClient.R_End, (X, Y, Z) => {
+					if (Voxels.IsSolid(X, Y, Z))
+						return false;
+
+					Voxels.SetVoxel(X, Y, Z, new VoxelEntry(VoxelType.NonSolid, RightLegCollides ? Color.Red : Color.Green));
 					return true;
 				});
 
-				Voxels.MarkDirty();
+				LeftLegCollides = !Voxels.Ray(LegClient.L_Start, LegClient.L_End, (X, Y, Z) => {
+					if (Voxels.IsSolid(X, Y, Z))
+						return false;
+
+					Voxels.SetVoxel(X, Y, Z, new VoxelEntry(VoxelType.NonSolid, LeftLegCollides ? Color.Red : Color.Green));
+					return true;
+				});
+
+				if (!Program.MarkDirtyAuto)
+					Voxels.MarkDirty();
 			}
 
 			return null;
 		}
+
+		static bool RightLegCollides;
+		static bool LeftLegCollides;
 
 		public static void GetVerts(ref Mesh3D Mesh) {
 			if (Program.RenderPoints) {

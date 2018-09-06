@@ -8,7 +8,7 @@ namespace ColliderGUI {
 	public delegate bool OnRayCastLineSegment(int X, int Y, int Z);
 
 	public static class RayCast {
-		public static void RayCast3D(int X1, int Y1, int Z1, int X2, int Y2, int Z2, OnRayCastLineSegment OnRayCast) {
+		public static bool RayCast3D(int X1, int Y1, int Z1, int X2, int Y2, int Z2, OnRayCastLineSegment OnRayCast) {
 			int I, DX, DY, DZ, L, M, N, XInc, YInc, ZInc, Err1, Err2, DX2, DY2, DZ2;
 			int PointX;
 			int PointY;
@@ -35,7 +35,7 @@ namespace ColliderGUI {
 				Err1 = DY2 - L;
 				Err2 = DZ2 - L;
 				for (I = 0; I < L; I++) {
-					if (!OnRayCast(PointX, PointY, PointZ)) return;
+					if (!OnRayCast(PointX, PointY, PointZ)) return false;
 
 					if (Err1 > 0) {
 						PointY += YInc;
@@ -53,7 +53,7 @@ namespace ColliderGUI {
 				Err1 = DX2 - M;
 				Err2 = DZ2 - M;
 				for (I = 0; I < M; I++) {
-					if (!OnRayCast(PointX, PointY, PointZ)) return;
+					if (!OnRayCast(PointX, PointY, PointZ)) return false;
 
 					if (Err1 > 0) {
 						PointX += XInc;
@@ -71,7 +71,7 @@ namespace ColliderGUI {
 				Err1 = DY2 - N;
 				Err2 = DX2 - N;
 				for (I = 0; I < N; I++) {
-					if (!OnRayCast(PointX, PointY, PointZ)) return;
+					if (!OnRayCast(PointX, PointY, PointZ)) return false;
 
 					if (Err1 > 0) {
 						PointY += YInc;
@@ -87,7 +87,7 @@ namespace ColliderGUI {
 				}
 			}
 
-			OnRayCast(PointX, PointY, PointZ);
+			return OnRayCast(PointX, PointY, PointZ);
 		}
 	}
 }

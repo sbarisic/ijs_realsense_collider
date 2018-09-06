@@ -198,6 +198,12 @@ namespace ColliderGUI {
 				Voxels.Update();
 		}
 
+		static void DrawPin(Texture T, Vector3 Pos) {
+			SetPinTex(T);
+			Pin.Matrix = Matrix4x4.CreateScale(15) * Matrix4x4.CreateTranslation(Pos);
+			Pin.Draw(Default);
+		}
+
 		static void Draw(float Dt) {
 			WorldSurface.Draw(Default);
 
@@ -222,15 +228,11 @@ namespace ColliderGUI {
 				DefaultFlatColor.Unbind();
 			}
 
-			Vector3 Pos = OptotrakClient.GetPos();
+			DrawPin(PinMat1, LegClient.R_Start - Program.WorldOrigin);
+			DrawPin(PinMat2, LegClient.R_End - Program.WorldOrigin);
 
-			SetPinTex(PinMat1);
-			Pin.Matrix = Matrix4x4.CreateScale(25) * Matrix4x4.CreateTranslation(LegClient.R_Start);
-			Pin.Draw(Default);
-
-			SetPinTex(PinMat2);
-			Pin.Matrix = Matrix4x4.CreateScale(25) * Matrix4x4.CreateTranslation(LegClient.R_End);
-			Pin.Draw(Default);
+			DrawPin(PinMat1, LegClient.L_Start - Program.WorldOrigin);
+			DrawPin(PinMat2, LegClient.L_End - Program.WorldOrigin);
 		}
 	}
 }

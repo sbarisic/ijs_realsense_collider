@@ -12,7 +12,8 @@ using FishGfx;
 namespace ColliderGUI {
 	enum VoxelType {
 		None,
-		Solid
+		Solid,
+		NonSolid,
 	}
 
 	struct VoxelEntry {
@@ -127,10 +128,10 @@ namespace ColliderGUI {
 				Dirty = true;
 		}
 
-		public static void Cast(Vector3 WorldStart, Vector3 WorldEnd, OnRayCastLineSegment OnRayCast) {
+		public static bool Ray(Vector3 WorldStart, Vector3 WorldEnd, OnRayCastLineSegment OnRayCast) {
 			WorldCoordToPos(WorldStart, out int StartX, out int StartY, out int StartZ);
 			WorldCoordToPos(WorldEnd, out int EndX, out int EndY, out int EndZ);
-			RayCast.RayCast3D(StartX, StartY, StartZ, EndX, EndY, EndZ, OnRayCast);
+			return RayCast.RayCast3D(StartX, StartY, StartZ, EndX, EndY, EndZ, OnRayCast);
 		}
 
 		public static void Update() {
@@ -144,8 +145,8 @@ namespace ColliderGUI {
 				IdxToPos(i, out int X, out int Y, out int Z);
 				VoxelEntry T = VoxelEntry.None;
 
-				if (IsSolid(T = GetVoxel(X, Y, Z))) {
-					if (!IsSolid(X + 1, Y, Z) || !IsSolid(X - 1, Y, Z) || !IsSolid(X, Y + 1, Z) || !IsSolid(X, Y - 1, Z) || !IsSolid(X, Y, Z + 1) || !IsSolid(X, Y, Z - 1)) {
+				if (Visible(T = GetVoxel(X, Y, Z))) {
+					if (!Visible(X + 1, Y, Z) || !Visible(X - 1, Y, Z) || !Visible(X, Y + 1, Z) || !Visible(X, Y - 1, Z) || !Visible(X, Y, Z + 1) || !Visible(X, Y, Z - 1)) {
 						EmitVoxel(T, X, Y, Z, MeshVerts);
 					}
 				}
@@ -169,15 +170,26 @@ namespace ColliderGUI {
 			Dirty = true;
 		}
 
-		static bool IsSolid(int X, int Y, int Z) {
+		public static bool IsSolid(int X, int Y, int Z) {
 			return IsSolid(GetVoxel(X, Y, Z));
 		}
 
-		static bool IsSolid(VoxelEntry T) {
+		public static bool IsSolid(VoxelEntry T) {
 			if (T.Type == VoxelType.Solid)
 				return true;
 
 			return false;
+		}
+
+		public static bool Visible(int X, int Y, int Z) {
+			return Visible(GetVoxel(X, Y, Z));
+		}
+
+		public static bool Visible(VoxelEntry T) {
+			if (T.Type == VoxelType.None)
+				return false;
+
+			return true;
 		}
 	}
 }
