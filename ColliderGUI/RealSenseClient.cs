@@ -21,61 +21,78 @@ namespace ColliderGUI {
 		public static bool Ready;
 
 		public static void Init() {
-			Thread PollThread = new Thread(() => {
-				Console.WriteLine(ConsoleColor.DarkCyan, "Starting RealSense");
+			if (Program.UseThreading) {
+				Thread PollThread = new Thread(InitInternal);
+				PollThread.IsBackground = true;
+				PollThread.Start();
 
-				if (!FakePosition) {
-					IEnumerable<FrameData> Resolutions = RealSenseCamera.QueryResolutions().OrderBy((Data) => -Data.Framerate);
-					IEnumerable<FrameData> DepthResolutions = Resolutions.Where((Data) => Data.Type == FrameType.Depth);
+				while (!Ready)
+					Thread.Sleep(10);
+			} else
+				InitInternal();
+		}
 
-					int ReqW = 640;
-					float ReqH = 480;
+		static void InitInternal() {
+			Console.WriteLine(ConsoleColor.DarkCyan, "Starting RealSense");
 
-					//int ReqW = 1280;
-					//float ReqH = 720;
+			if (!FakePosition) {
+				IEnumerable<FrameData> Resolutions = RealSenseCamera.QueryResolutions().OrderBy((Data) => -Data.Framerate);
+				IEnumerable<FrameData> DepthResolutions = Resolutions.Where((Data) => Data.Type == FrameType.Depth);
 
-					FrameData DepthRes = DepthResolutions.Where((Data) => Data.Width == ReqW && Data.Height == ReqH && Data.Format == FrameFormat.Z16).First();
-					FrameData ColorRes = Resolutions.Where((Data) => Data.Width == ReqW && Data.Height == ReqH && Data.Format == FrameFormat.Rgb8).First();
+				int ReqW = 640;
+				int ReqH = 480;
 
-					W = ColorRes.Width;
-					H = ColorRes.Height;
-					RealSenseCamera.SetOption(DepthRes, RealSenseOption.VisualPreset, 1);//4
-					RealSenseCamera.SetOption(DepthRes, RealSenseOption.EmitterEnabled, 0);
-					RealSenseCamera.SetOption(DepthRes, RealSenseOption.EnableAutoExposure, 1);
+				//int ReqW = 848;
+				//int ReqH = 480;
 
-					//RealSenseCamera.SetOption(DepthRes, RealSenseOption.LaserPower, 30);
+				//int ReqW = 1280;
+				//int ReqH = 720;
 
-					RealSenseCamera.DisableAllStreams();
-					RealSenseCamera.EnableStream(DepthRes, ColorRes);
-					RealSenseCamera.Start();
+				FrameData DepthRes = DepthResolutions.Where((Data) => Data.Width == ReqW && Data.Height == ReqH && Data.Format == FrameFormat.Z16).First();
+				FrameData ColorRes = Resolutions.Where((Data) => Data.Width == ReqW && Data.Height == ReqH && Data.Format == FrameFormat.Rgb8).First();
 
-					Console.WriteLine(ConsoleColor.DarkCyan, "RealSense ready, polling for frames");
-					while (true) {
-						if (RealSenseCamera.PollForFrames(null, OnPointCloud)) {
-							if (!Ready)
-								Ready = true;
-						}
-					}
-				} else {
-					Ready = true;
+				W = ColorRes.Width;
+				H = ColorRes.Height;
 
-					float Scale = 1.0f / 500.0f;
-					int PlaneSize = 100;
-					Vertex3[] Verts = OnPointCloud(PlaneSize * PlaneSize, null, null);
+				Console.WriteLine(ConsoleColor.DarkCyan, "RealSense running at {0}x{1}", W, H);
 
-					for (int y = 0; y < PlaneSize; y++)
-						for (int x = 0; x < PlaneSize; x++)
-							Verts[y * PlaneSize + x] = new Vertex3(x * Scale - ((PlaneSize / 2) * Scale), y * Scale - ((PlaneSize / 2) * Scale), 0.5f);
+				RealSenseCamera.SetOption(DepthRes, RealSenseOption.VisualPreset, 1);//4
+				RealSenseCamera.SetOption(DepthRes, RealSenseOption.EmitterEnabled, 0);
+				RealSenseCamera.SetOption(DepthRes, RealSenseOption.EnableAutoExposure, 1);
 
+				//RealSenseCamera.SetOption(DepthRes, RealSenseOption.LaserPower, 30);
+
+				RealSenseCamera.DisableAllStreams();
+				RealSenseCamera.EnableStream(DepthRes, ColorRes);
+				RealSenseCamera.Start();
+
+				Console.WriteLine(ConsoleColor.DarkCyan, "RealSense ready");
+
+				if (Program.UseThreading)
 					while (true)
-						OnPointCloud(Verts.Length, Verts, null);
-				}
-			});
-			PollThread.IsBackground = true;
-			PollThread.Start();
+						Loop();
 
-			while (!Ready)
-				Thread.Sleep(10);
+			} else {
+				Ready = true;
+
+				float Scale = 1.0f / 500.0f;
+				int PlaneSize = 100;
+				Vertex3[] Verts = OnPointCloud(PlaneSize * PlaneSize, null, null);
+
+				for (int y = 0; y < PlaneSize; y++)
+					for (int x = 0; x < PlaneSize; x++)
+						Verts[y * PlaneSize + x] = new Vertex3(x * Scale - ((PlaneSize / 2) * Scale), y * Scale - ((PlaneSize / 2) * Scale), 0.5f);
+
+				while (true)
+					OnPointCloud(Verts.Length, Verts, null);
+			}
+		}
+
+		public static void Loop() {
+			if (Program.RealSenseEnabled && RealSenseCamera.PollForFrames(null, OnPointCloud)) {
+				if (!Ready)
+					Ready = true;
+			}
 		}
 
 		static object Lck = new object();
@@ -108,23 +125,38 @@ namespace ColliderGUI {
 
 				//Voxels.SetVoxel(0, 0, 0, new VoxelEntry(VoxelType.Solid));
 
+				//Voxels.Fill(new VoxelEntry(VoxelType.Solid));
+				Voxels.Fill(VoxelEntry.None);
+
 				for (int i = 0, j = 0; i < Count; i++) {
 					if (Verts[i].Position == Vector3.Zero)
 						continue;
 
 					Vertex3 Vert = Verts[i];
-					Vert.Color = Clr.GetPixel(Vert.UV, false);
 					Vert.Position = Vector3.Transform((Vert.Position * 1000), TransMat);
 
-					if (Vector3.DistanceSquared(CamPos, Vert.Position) < (500 * 500))
+					if (Vector3.Distance(CamPos, Vert.Position) < 1000)
 						continue;
 
+					Vert.Color = Clr.GetPixel(Vert.UV, false);
 					Points[j++] = Vert;
 					PointCount++;
 
 					Vector3 WorldPos = Vert.Position + Program.WorldOrigin;
-					Voxels.SetVoxel(WorldPos, new VoxelEntry(VoxelType.Solid, Points[j].Color));
+
+					/*Voxels.Cast(CamPos, WorldPos, (X, Y, Z) => {
+						Voxels.SetVoxel(X, Y, Z, new VoxelEntry(VoxelType.None));
+					});*/
+
+					Voxels.SetVoxel(WorldPos, new VoxelEntry(VoxelType.Solid, Vert.Color));
 				}
+
+				Voxels.Cast(LegClient.R_Start, LegClient.R_End, (X, Y, Z) => {
+					Voxels.SetVoxel(X, Y, Z, new VoxelEntry(VoxelType.Solid, Color.Red));
+					return true;
+				});
+
+				Voxels.MarkDirty();
 			}
 
 			return null;

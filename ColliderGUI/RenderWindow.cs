@@ -26,12 +26,28 @@ namespace ColliderGUI {
 		static float Treadmill_X;
 		static float Treadmill_Z;
 
+		static bool _CaptureMouse;
+		static bool CaptureMouse {
+			get {
+				return _CaptureMouse;
+			}
+			set {
+				RWnd.CaptureCursor = (_CaptureMouse = value);
+			}
+		}
+
 		public static void Init(float TargetFramerate, float Treadmill_X, float Treadmill_Z) {
 			RenderWindow.Treadmill_X = Treadmill_X;
 			RenderWindow.Treadmill_Z = Treadmill_Z;
 
 			Framerate = TargetFramerate;
 			Console.WriteLine(ConsoleColor.Green, "Target framerate: {0} FPS", TargetFramerate);
+			Console.WriteLine(ConsoleColor.Green, "M  - Camera position");
+			Console.WriteLine(ConsoleColor.Green, "F1 - Toggle RealSense capture");
+			Console.WriteLine(ConsoleColor.Green, "F2 - Toggle mouse capture");
+			Console.WriteLine(ConsoleColor.Green, "F3 - Toggle render points");
+			Console.WriteLine(ConsoleColor.Green, "F4 - Toggle render voxels");
+			Console.WriteLine(ConsoleColor.Green, "F5 - Move camera to RealSense position");
 
 			Vector2 Res = RWnd.GetDesktopResolution() * 0.9f;
 			RWnd = new RWnd((int)Res.X, (int)Res.Y, nameof(ColliderGUI));
@@ -40,9 +56,10 @@ namespace ColliderGUI {
 			Console.WriteLine(ConsoleColor.Green, RenderAPI.Renderer);
 			Console.LogWriteLine("OpenGL Extensions:\n    {0}", string.Join("\n    ", RenderAPI.Extensions));
 
-			RWnd.CaptureCursor = true;
+			CaptureMouse = false;
 			RWnd.OnMouseMoveDelta += (Wnd, X, Y) => {
-				Cam.Update(-new Vector2(X, Y));
+				if (CaptureMouse)
+					Cam.Update(-new Vector2(X, Y));
 			};
 
 			RWnd.OnKey += (RWnd Wnd, Key Key, int Scancode, bool Pressed, bool Repeat, KeyMods Mods) => {
@@ -61,12 +78,30 @@ namespace ColliderGUI {
 
 				if (Pressed && Key == Key.Escape)
 					RWnd.Close();
+
+				if (Pressed && Key == Key.M)
+					Console.WriteLine(ConsoleColor.Green, "Pos: {0}", Cam.Position);
+
+				if (Pressed && Key == Key.F1)
+					Program.RealSenseEnabled = !Program.RealSenseEnabled;
+
+				if (Pressed && Key == Key.F2)
+					CaptureMouse = !CaptureMouse;
+
+				if (Pressed && Key == Key.F3)
+					Program.RenderPoints = !Program.RenderPoints;
+
+				if (Pressed && Key == Key.F4)
+					Program.RenderVoxels = !Program.RenderVoxels;
+
+				if (Pressed && Key == Key.F5)
+					Cam.Position = OptotrakClient.GetPos();
 			};
 
 			SetupCamera();
 			LoadAssets();
 
-			Gfx.PointSize(3);
+			Gfx.PointSize(5);
 		}
 
 		static void SetupCamera() {
@@ -74,15 +109,24 @@ namespace ColliderGUI {
 			Cam.MouseMovement = true;
 
 			Cam.SetPerspective(RWnd.WindowSize.X, RWnd.WindowSize.Y);
-			Cam.Position = new Vector3(-50, 100, -50);
-			Cam.LookAt(new Vector3(Treadmill_X / 2, 0, Treadmill_Z / 2));
+
+			Cam.Position = new Vector3(-1167.559f, 952.6618f, 278.9347f);
+			Cam.LookAt(new Vector3(-Treadmill_X / 2, 0, Treadmill_Z));
 		}
 
 		static ShaderProgram Default;
 		static ShaderProgram DefaultFlatColor;
 		static RenderModel WorldSurface;
+		static RenderModel Plane;
 		static RenderModel Pin;
 		static Mesh3D Points;
+
+		static Texture PinMat1;
+		static Texture PinMat2;
+
+		static void SetPinTex(Texture T) {
+			Pin.SetMaterialTexture("pin_mat", T);
+		}
 
 		static void LoadAssets() {
 			Default = new ShaderProgram(new ShaderStage(ShaderType.VertexShader, "data/default3d.vert"),
@@ -104,18 +148,21 @@ namespace ColliderGUI {
 			for (int i = 0; i < Meshes.Length; i++)
 				Meshes[i].ForEachPosition((In) => Vector3.Transform(In, RotMat));//*/
 
-			Pin = new RenderModel(Meshes, false, false);
+			Plane = new RenderModel(Meshes, false, false);
 			Texture WhiteTex = Texture.FromFile("data/textures/colors/white.png");
 			for (int i = 0; i < Meshes.Length; i++) {
-				Pin.SetMaterialTexture(Meshes[i].MaterialName, WhiteTex);
-				Pin.GetMaterialMesh(Meshes[i].MaterialName).DefaultColor = GfxUtils.RandomColor();
+				Plane.SetMaterialTexture(Meshes[i].MaterialName, WhiteTex);
+				Plane.GetMaterialMesh(Meshes[i].MaterialName).DefaultColor = GfxUtils.RandomColor();
 			}
 
-			if (Program.RenderPoints) {
-				// Points
-				Points = new Mesh3D(BufferUsage.StreamDraw);
-				Points.PrimitiveType = PrimitiveType.Points;
-			}
+			// Pin
+			Pin = new RenderModel(Obj.Load("data/models/pin/pin.obj"), true, false);
+			PinMat1 = Texture.FromFile("data/models/pin/pin_mat.png");
+			PinMat2 = Texture.FromFile("data/models/pin/pin_mat2.png");
+
+			// Points
+			Points = new Mesh3D(BufferUsage.StreamDraw);
+			Points.PrimitiveType = PrimitiveType.Points;
 		}
 
 		public static bool Tick() {
@@ -147,21 +194,24 @@ namespace ColliderGUI {
 			if (!(MoveVec.X == 0 && MoveVec.Y == 0 && MoveVec.Z == 0))
 				Cam.Position += Cam.ToWorldNormal(Vector3.Normalize(MoveVec)) * MoveSpeed * Dt;
 
-			Voxels.Update();
+			if (Program.RenderVoxels)
+				Voxels.Update();
 		}
 
 		static void Draw(float Dt) {
 			WorldSurface.Draw(Default);
 
-			ShaderUniforms.Model = Matrix4x4.CreateTranslation(-Program.WorldOrigin);
-			DefaultFlatColor.Bind();
-			Voxels.VoxMesh.Draw();
-			DefaultFlatColor.Unbind();
+			if (Program.RenderVoxels) {
+				ShaderUniforms.Model = Matrix4x4.CreateTranslation(-Program.WorldOrigin);
+				DefaultFlatColor.Bind();
+				Voxels.VoxMesh.Draw();
+				DefaultFlatColor.Unbind();
+			}
 
 			Matrix4x4 TransRot = OptotrakClient.GetRotation() * OptotrakClient.GetTranslation();
 			ShaderUniforms.Model = Matrix4x4.CreateScale(10) * TransRot;
 			Default.Bind();
-			Pin.Draw();
+			Plane.Draw();
 			Default.Unbind();
 
 			if (Program.RenderPoints) {
@@ -171,6 +221,16 @@ namespace ColliderGUI {
 				Points.Draw();
 				DefaultFlatColor.Unbind();
 			}
+
+			Vector3 Pos = OptotrakClient.GetPos();
+
+			SetPinTex(PinMat1);
+			Pin.Matrix = Matrix4x4.CreateScale(25) * Matrix4x4.CreateTranslation(LegClient.R_Start);
+			Pin.Draw(Default);
+
+			SetPinTex(PinMat2);
+			Pin.Matrix = Matrix4x4.CreateScale(25) * Matrix4x4.CreateTranslation(LegClient.R_End);
+			Pin.Draw(Default);
 		}
 	}
 }

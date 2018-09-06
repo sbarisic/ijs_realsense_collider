@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace ColliderGUI {
-	public delegate void OnRayCastLineSegment(int X, int Y, int Z);
+	public delegate bool OnRayCastLineSegment(int X, int Y, int Z);
 
 	public static class RayCast {
 		public static void RayCast3D(int X1, int Y1, int Z1, int X2, int Y2, int Z2, OnRayCastLineSegment OnRayCast) {
@@ -35,7 +35,7 @@ namespace ColliderGUI {
 				Err1 = DY2 - L;
 				Err2 = DZ2 - L;
 				for (I = 0; I < L; I++) {
-					OnRayCast(PointX, PointY, PointZ);
+					if (!OnRayCast(PointX, PointY, PointZ)) return;
 
 					if (Err1 > 0) {
 						PointY += YInc;
@@ -53,7 +53,7 @@ namespace ColliderGUI {
 				Err1 = DX2 - M;
 				Err2 = DZ2 - M;
 				for (I = 0; I < M; I++) {
-					OnRayCast(PointX, PointY, PointZ);
+					if (!OnRayCast(PointX, PointY, PointZ)) return;
 
 					if (Err1 > 0) {
 						PointX += XInc;
@@ -71,7 +71,7 @@ namespace ColliderGUI {
 				Err1 = DY2 - N;
 				Err2 = DX2 - N;
 				for (I = 0; I < N; I++) {
-					OnRayCast(PointX, PointY, PointZ);
+					if (!OnRayCast(PointX, PointY, PointZ)) return;
 
 					if (Err1 > 0) {
 						PointY += YInc;

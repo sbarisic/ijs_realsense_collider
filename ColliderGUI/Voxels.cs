@@ -54,12 +54,12 @@ namespace ColliderGUI {
 			VoxMesh = new Mesh3D(BufferUsage.DynamicDraw);
 			VoxelArray = new VoxelEntry[Width * Height * Depth];
 
-			for (int i = 0; i < VoxelArray.Length; i++)
-				VoxelArray[i] = VoxelEntry.None;
-			//VoxelArray[i] = new VoxelEntry(VoxelType.Solid, GfxUtils.RandomColor());
+			Fill(VoxelEntry.None);
 
 			CubeVerts = Obj.Load("data/models/cube/cube.obj").First().Vertices.ToArray();
-			Dirty = true;
+
+			if (Program.MarkDirtyAuto)
+				Dirty = true;
 		}
 
 		static int PosToIdx(int X, int Y, int Z) {
@@ -108,13 +108,29 @@ namespace ColliderGUI {
 
 			if (VoxelArray[Idx].Type != Vox.Type) {
 				VoxelArray[Idx] = Vox;
-				Dirty = true;
+
+				if (Program.MarkDirtyAuto)
+					Dirty = true;
 			}
 		}
 
 		public static void SetVoxel(Vector3 WorldCoords, VoxelEntry Vox) {
 			WorldCoordToPos(WorldCoords, out int X, out int Y, out int Z);
 			SetVoxel(X, Y, Z, Vox);
+		}
+
+		public static void Fill(VoxelEntry Vox) {
+			for (int i = 0; i < VoxelArray.Length; i++)
+				VoxelArray[i] = Vox;
+
+			if (Program.MarkDirtyAuto)
+				Dirty = true;
+		}
+
+		public static void Cast(Vector3 WorldStart, Vector3 WorldEnd, OnRayCastLineSegment OnRayCast) {
+			WorldCoordToPos(WorldStart, out int StartX, out int StartY, out int StartZ);
+			WorldCoordToPos(WorldEnd, out int EndX, out int EndY, out int EndZ);
+			RayCast.RayCast3D(StartX, StartY, StartZ, EndX, EndY, EndZ, OnRayCast);
 		}
 
 		public static void Update() {
@@ -147,6 +163,10 @@ namespace ColliderGUI {
 
 				Verts.Add(V);
 			}
+		}
+
+		public static void MarkDirty() {
+			Dirty = true;
 		}
 
 		static bool IsSolid(int X, int Y, int Z) {
