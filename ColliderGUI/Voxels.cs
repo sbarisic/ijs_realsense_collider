@@ -11,13 +11,13 @@ using FishGfx;
 
 namespace ColliderGUI {
 	enum VoxelType {
-		None,
+		Empty,
 		Solid,
 		NonSolid,
 	}
 
 	struct VoxelEntry {
-		public static readonly VoxelEntry None = new VoxelEntry(VoxelType.None);
+		public static readonly VoxelEntry Empty = new VoxelEntry(VoxelType.Empty);
 
 		public VoxelType Type;
 		public Color Color;
@@ -55,7 +55,7 @@ namespace ColliderGUI {
 			VoxMesh = new Mesh3D(BufferUsage.DynamicDraw);
 			VoxelArray = new VoxelEntry[Width * Height * Depth];
 
-			Fill(VoxelEntry.None);
+			Fill(VoxelEntry.Empty);
 
 			CubeVerts = Obj.Load("data/models/cube/cube.obj").First().Vertices.ToArray();
 
@@ -84,13 +84,13 @@ namespace ColliderGUI {
 
 		public static VoxelEntry GetVoxel(int X, int Y, int Z) {
 			if (X < 0 || X >= Width)
-				return VoxelEntry.None;
+				return VoxelEntry.Empty;
 
 			if (Y < 0 || Y >= Height)
-				return VoxelEntry.None;
+				return VoxelEntry.Empty;
 
 			if (Z < 0 || Z >= Depth)
-				return VoxelEntry.None;
+				return VoxelEntry.Empty;
 
 			return VoxelArray[PosToIdx(X, Y, Z)];
 		}
@@ -143,7 +143,7 @@ namespace ColliderGUI {
 
 			for (int i = 0; i < VoxelArray.Length; i++) {
 				IdxToPos(i, out int X, out int Y, out int Z);
-				VoxelEntry T = VoxelEntry.None;
+				VoxelEntry T = VoxelEntry.Empty;
 
 				if (Visible(T = GetVoxel(X, Y, Z))) {
 					if (!Visible(X + 1, Y, Z) || !Visible(X - 1, Y, Z) || !Visible(X, Y + 1, Z) || !Visible(X, Y - 1, Z) || !Visible(X, Y, Z + 1) || !Visible(X, Y, Z - 1)) {
@@ -186,7 +186,7 @@ namespace ColliderGUI {
 		}
 
 		public static bool Visible(VoxelEntry T) {
-			if (T.Type == VoxelType.None)
+			if (T.Type == VoxelType.Empty)
 				return false;
 
 			return true;

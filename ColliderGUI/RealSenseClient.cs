@@ -126,7 +126,7 @@ namespace ColliderGUI {
 				//Voxels.SetVoxel(0, 0, 0, new VoxelEntry(VoxelType.Solid));
 
 				//Voxels.Fill(new VoxelEntry(VoxelType.Solid));
-				Voxels.Fill(VoxelEntry.None);
+				Voxels.Fill(VoxelEntry.Empty);
 
 				for (int i = 0, j = 0; i < Count; i++) {
 					if (Verts[i].Position == Vector3.Zero)
