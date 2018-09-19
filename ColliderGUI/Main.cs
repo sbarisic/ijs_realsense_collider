@@ -14,6 +14,7 @@ using System.Globalization;
 
 namespace ColliderGUI {
 	public static class Program {
+		public static bool SpawnConsole = true;
 		public static bool MarkDirtyAuto = false;
 		public static bool UseThreading = false;
 
@@ -26,6 +27,13 @@ namespace ColliderGUI {
 		public static float Treadmill_Z = 0;
 		public static float VoxelSize = 0;
 
+		public static float OptotrakOffset_X = 0;
+		public static float OptotrakOffset_Y = 0;
+		public static float OptotrakOffset_Z = 0;
+
+		public static float PelvisHeight = 1300;
+
+		public static Vector3 OptotrakOffset;
 		public static Vector3 WorldOrigin;
 		public static Vector3 CameraHeight;
 
@@ -46,6 +54,8 @@ namespace ColliderGUI {
 				else if (Field.FieldType == typeof(bool))
 					Field.SetValue(null, Vals[1].Trim().ToLower() == "true");
 			}
+
+			OptotrakOffset = new Vector3(OptotrakOffset_X, OptotrakOffset_Y, OptotrakOffset_Z).YZX();
 		}
 
 		static void Main(string[] Args) {
@@ -56,9 +66,9 @@ namespace ColliderGUI {
 			int VoxelsZ = (int)(Treadmill_Z / VoxelSize);
 
 			WorldOrigin = new Vector3(1200, 0, 0);
-			CameraHeight = new Vector3(0, 1400, 0);
+			CameraHeight = new Vector3(0, PelvisHeight, 0);
 
-			Console.Spawn(Args.Contains("--console"));
+			Console.Spawn(Args.Contains("--console") || SpawnConsole);
 			OptotrakClient.Init(40023);
 			LegClient.Init(40024);
 			RenderWindow.Init(60, Treadmill_X, Treadmill_Z);

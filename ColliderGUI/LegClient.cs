@@ -49,14 +49,19 @@ namespace ColliderGUI {
 			return (float)BitConverter.ToDouble(Bytes, Idx * sizeof(double));
 		}
 
+		static Vector3 GetVector(byte[] Bytes, int Idx) {
+			return Transform(new Vector3(GetFloat(Bytes, Idx), GetFloat(Bytes, Idx + 1), GetFloat(Bytes, Idx + 2)));
+		}
+
 		public static void ReceiveVectors() {
+			const int ElementCount = 3;
 			byte[] Bytes = ReceiveRaw();
 
-			R_Start = Transform(new Vector3(GetFloat(Bytes, 0), GetFloat(Bytes, 1), GetFloat(Bytes, 2)));
-			L_Start = Transform(new Vector3(GetFloat(Bytes, 3), GetFloat(Bytes, 4), GetFloat(Bytes, 5)));
+			R_Start = GetVector(Bytes, 0 * ElementCount);
+			L_Start = GetVector(Bytes, 1 * ElementCount);
 
-			R_End = Transform(new Vector3(GetFloat(Bytes, 6), GetFloat(Bytes, 7), GetFloat(Bytes, 8)));
-			L_End = Transform(new Vector3(GetFloat(Bytes, 9), GetFloat(Bytes, 10), GetFloat(Bytes, 11)));
+			R_End = GetVector(Bytes, 2 * ElementCount);
+			L_End = GetVector(Bytes, 3 * ElementCount);
 		}
 
 		static Vector3 Transform(Vector3 In) {

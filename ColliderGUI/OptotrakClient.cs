@@ -171,9 +171,9 @@ namespace ColliderGUI {
 			Vector3* Vectors = stackalloc Vector3[3];
 			Marshal.Copy(Bytes, 0, new IntPtr(Vectors), 3 * 3 * sizeof(float));
 
-			Vector3 A = ABuffer.PushGetAverage(Vectors[0]);
-			Vector3 B = BBuffer.PushGetAverage(Vectors[1]);
-			Vector3 C = CBuffer.PushGetAverage(Vectors[2]);
+			Vector3 A = ABuffer.PushGetAverage(Vectors[0] + Program.OptotrakOffset);
+			Vector3 B = BBuffer.PushGetAverage(Vectors[1] + Program.OptotrakOffset);
+			Vector3 C = CBuffer.PushGetAverage(Vectors[2] + Program.OptotrakOffset);
 
 			if (IsVisible(A))
 				MarkerA = A.YZX();

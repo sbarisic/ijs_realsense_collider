@@ -1,4 +1,6 @@
-﻿MarkDirtyAuto = true
+﻿SpawnConsole = true
+
+MarkDirtyAuto = true
 UseThreading = false
 
 RealSenseEnabled = false
@@ -9,3 +11,9 @@ Treadmill_X = 1200
 Treadmill_Y = 500
 Treadmill_Z = 2000
 VoxelSize = 15
+
+PelvisHeight = 1300
+
+OptotrakOffset_X = 0
+OptotrakOffset_Y = 800
+OptotrakOffset_Z = 0
