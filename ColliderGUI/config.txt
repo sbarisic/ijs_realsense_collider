@@ -3,9 +3,9 @@
 MarkDirtyAuto = true
 UseThreading = false
 
-RealSenseEnabled = false
-RenderPoints = false
-RenderVoxels = false
+RealSenseEnabled = true
+RenderPoints = true
+RenderVoxels = true
 
 Treadmill_X = 1200
 Treadmill_Y = 500

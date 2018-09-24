@@ -22,14 +22,14 @@ namespace ColliderGUI {
 
 		public static void Init() {
 			if (Program.UseThreading) {
-				Thread PollThread = new Thread(InitInternal);
+				Thread PollThread = new Thread(InitInternal); // Run InitInternal on a new thread
 				PollThread.IsBackground = true;
 				PollThread.Start();
 
 				while (!Ready)
 					Thread.Sleep(10);
 			} else
-				InitInternal();
+				InitInternal(); // Run InitInternal directly
 		}
 
 		static void InitInternal() {

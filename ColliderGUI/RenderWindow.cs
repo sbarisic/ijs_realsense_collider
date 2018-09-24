@@ -61,7 +61,7 @@ namespace ColliderGUI {
 				if (CaptureMouse)
 					Cam.Update(-new Vector2(X, Y));
 			};
-
+            
 			RWnd.OnKey += (RWnd Wnd, Key Key, int Scancode, bool Pressed, bool Repeat, KeyMods Mods) => {
 				if (Key == Key.Space)
 					MoveVec.Y = Pressed ? 1 : 0;
@@ -75,7 +75,7 @@ namespace ColliderGUI {
 					MoveVec.Z = Pressed ? 1 : 0;
 				else if (Key == Key.D)
 					MoveVec.X = Pressed ? 1 : 0;
-
+                
 				if (Pressed && Key == Key.Escape)
 					RWnd.Close();
 
@@ -96,6 +96,9 @@ namespace ColliderGUI {
 
 				if (Pressed && Key == Key.F5)
 					Cam.Position = OptotrakClient.GetPos();
+
+                if (Key == Key.MouseLeft)
+                    CaptureMouse = Pressed;
 			};
 
 			SetupCamera();
