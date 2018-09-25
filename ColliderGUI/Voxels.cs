@@ -13,7 +13,7 @@ namespace ColliderGUI {
 	enum VoxelType {
 		Empty,
 		Solid,
-		NonSolid,
+		NonSolid, // Used for casting rays (the green line)
 	}
 
 	struct VoxelEntry {
@@ -37,8 +37,8 @@ namespace ColliderGUI {
 		static int Depth;
 		static int Height;
 
-		static VoxelEntry[] VoxelArray;
-		static bool Dirty;
+		static VoxelEntry[] VoxelArray; //The actuall array of voxels
+		static bool Dirty; // This applies to the whole voxel array
 
 		static Vertex3[] CubeVerts;
 
@@ -55,14 +55,21 @@ namespace ColliderGUI {
 			VoxMesh = new Mesh3D(BufferUsage.DynamicDraw);
 			VoxelArray = new VoxelEntry[Width * Height * Depth];
 
-			Fill(VoxelEntry.Empty);
+			Fill(VoxelEntry.Empty); // Fill the whole voxel array with empty type voxels
 
-			CubeVerts = Obj.Load("data/models/cube/cube.obj").First().Vertices.ToArray();
+			CubeVerts = Obj.Load("data/models/cube/cube.obj").First().Vertices.ToArray(); // Load cube model
 
 			if (Program.MarkDirtyAuto)
 				Dirty = true;
 		}
 
+        /// <summary>
+        /// Converts the x,y,z position and gives back the index (into the voxel array).
+        /// </summary>
+        /// <param name="X"></param>
+        /// <param name="Y"></param>
+        /// <param name="Z"></param>
+        /// <returns></returns>
 		static int PosToIdx(int X, int Y, int Z) {
 			return (Z * Width * Height) + (Y * Width) + X;
 		}
@@ -74,6 +81,13 @@ namespace ColliderGUI {
 			X = Idx % Width;
 		}
 
+        /// <summary>
+        /// It converts world coordinates to voxel coordinates (voxel position)
+        /// </summary>
+        /// <param name="WorldCoord"></param>
+        /// <param name="X"></param>
+        /// <param name="Y"></param>
+        /// <param name="Z"></param>
 		static void WorldCoordToPos(Vector3 WorldCoord, out int X, out int Y, out int Z) {
 			WorldCoord /= VoxelSize;
 
@@ -82,6 +96,13 @@ namespace ColliderGUI {
 			Z = (int)WorldCoord.Z;
 		}
 
+        /// <summary>
+        /// Takes in the voxel position and returns the corresponding voxel in the voxel array.
+        /// </summary>
+        /// <param name="X"></param>
+        /// <param name="Y"></param>
+        /// <param name="Z"></param>
+        /// <returns></returns>
 		public static VoxelEntry GetVoxel(int X, int Y, int Z) {
 			if (X < 0 || X >= Width)
 				return VoxelEntry.Empty;
@@ -95,6 +116,13 @@ namespace ColliderGUI {
 			return VoxelArray[PosToIdx(X, Y, Z)];
 		}
 
+        /// <summary>
+        /// Set the voxel entry (type: Empty, Solid or Nonsolid).
+        /// </summary>
+        /// <param name="X"></param>
+        /// <param name="Y"></param>
+        /// <param name="Z"></param>
+        /// <param name="Vox"></param>
 		public static void SetVoxel(int X, int Y, int Z, VoxelEntry Vox) {
 			if (X < 0 || X >= Width)
 				return;
@@ -120,7 +148,7 @@ namespace ColliderGUI {
 			SetVoxel(X, Y, Z, Vox);
 		}
 
-		public static void Fill(VoxelEntry Vox) {
+		public static void Fill(VoxelEntry Vox) { //S ets all the voxels to VOX
 			for (int i = 0; i < VoxelArray.Length; i++)
 				VoxelArray[i] = Vox;
 
@@ -139,13 +167,14 @@ namespace ColliderGUI {
 				return;
 			Dirty = false;
 
-			MeshVerts.Clear();
+			MeshVerts.Clear(); // Clears the mesh
 
-			for (int i = 0; i < VoxelArray.Length; i++) {
+			for (int i = 0; i < VoxelArray.Length; i++) { 
 				IdxToPos(i, out int X, out int Y, out int Z);
 				VoxelEntry T = VoxelEntry.Empty;
 
-				if (Visible(T = GetVoxel(X, Y, Z))) {
+				if (Visible(T = GetVoxel(X, Y, Z))) { 
+                    //Check if the block can actually be visible. If not, we do not want to emit it.
 					if (!Visible(X + 1, Y, Z) || !Visible(X - 1, Y, Z) || !Visible(X, Y + 1, Z) || !Visible(X, Y - 1, Z) || !Visible(X, Y, Z + 1) || !Visible(X, Y, Z - 1)) {
 						EmitVoxel(T, X, Y, Z, MeshVerts);
 					}

@@ -114,7 +114,7 @@ namespace ColliderGUI {
 
 			FrameData Clr = Frames[1];
 
-			lock (Lck) {
+			lock (Lck) {// thread synchronization stuff. Used to lock an object to prevent other threads from chaging it... (Monitor.Enter)
 				Vector3 CamPos = OptotrakClient.GetPos();
 				OptotrakClient.GetRotationAngles(out float Yaw, out float Pitch, out float Roll);
 				Matrix4x4 TransMat = Matrix4x4.CreateFromYawPitchRoll(Yaw, Pitch + (float)Math.PI, -Roll) * OptotrakClient.GetTranslation();

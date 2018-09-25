@@ -217,8 +217,8 @@ namespace ColliderGUI {
 				DefaultFlatColor.Unbind();
 			}
 
-			Matrix4x4 TransRot = OptotrakClient.GetRotation() * OptotrakClient.GetTranslation();
-			ShaderUniforms.Model = Matrix4x4.CreateScale(10) * TransRot;
+			Matrix4x4 TransRot = OptotrakClient.GetRotation() * OptotrakClient.GetTranslation(); // This is the transformation matrix for rendering of the plane
+			ShaderUniforms.Model = Matrix4x4.CreateScale(10) * TransRot; // Translates, rotates and scales the plane to appropriate size.
 			Default.Bind();
 			Plane.Draw();
 			Default.Unbind();

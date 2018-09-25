@@ -16,7 +16,7 @@ namespace ColliderGUI {
 		const bool FakePosition = false;
 
 		static UdpClient UDP;
-		static int Port = 40024;
+		static int Port;
 
 		public static Vector3 L_Start;
 		public static Vector3 L_End;
@@ -46,14 +46,14 @@ namespace ColliderGUI {
 		}
 
 		static float GetFloat(byte[] Bytes, int Idx) {
-			return (float)BitConverter.ToDouble(Bytes, Idx * sizeof(double));
+			return (float)BitConverter.ToDouble(Bytes, Idx * sizeof(double)); // get double value from recieved bytes and cast them to float
 		}
 
 		static Vector3 GetVector(byte[] Bytes, int Idx) {
 			return Transform(new Vector3(GetFloat(Bytes, Idx), GetFloat(Bytes, Idx + 1), GetFloat(Bytes, Idx + 2)));
 		}
 
-		public static void ReceiveVectors() {
+		public static void ReceiveVectors() { // This loops in this thread
 			const int ElementCount = 3;
 			byte[] Bytes = ReceiveRaw();
 
@@ -64,7 +64,7 @@ namespace ColliderGUI {
 			L_End = GetVector(Bytes, 3 * ElementCount);
 		}
 
-		static Vector3 Transform(Vector3 In) {
+		static Vector3 Transform(Vector3 In) { //This attaches the legs to the camera (in the world coordinates)
 			return In.YZX() + OptotrakClient.GetPos() - Program.CameraHeight + Program.WorldOrigin;
 		}
 	}

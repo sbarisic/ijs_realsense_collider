@@ -12,8 +12,8 @@ using System.Threading.Tasks;
 using FishGfx;
 
 namespace ColliderGUI {
-	public class CircularVectorBuffer {
-		const int Len = 10;
+	public class CircularVectorBuffer { //Stores an array of 10 vectors and averages them (a running average filter)
+		const int Len = 10; // Can be set to n
 
 		Vector3[] Vectors;
 		int CurIdx;
@@ -45,18 +45,17 @@ namespace ColliderGUI {
 	}
 
 	public static unsafe class OptotrakClient {
-		const bool FakePosition = false;
+		const bool FakePosition = false; // for debugging, return random values if no optotrack is connected
 
-		static bool FirstItemReceived;
+		static bool FirstItemReceived; // Flag used for feedback if the machine is getting optotrack data
 		static UdpClient UDP;
-		static int Port = 40023;
+		static int Port;
 
 		public static Vector3 MarkerA;
 		public static Vector3 MarkerB;
 		public static Vector3 MarkerC;
-		public static bool Visible;
 
-		static void PrintInfo() {
+		static void PrintInfo() { // Print in console IP and port of local machine
 			string LocalIP = "0.0.0.0";
 
 			using (Socket S = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.IP)) {
@@ -68,10 +67,10 @@ namespace ColliderGUI {
 		}
 
 		public static void Init(int Port) {
-			OptotrakClient.Port = Port;
+			OptotrakClient.Port = Port; // Set the UDP port
 			PrintInfo();
 			FirstItemReceived = false;
-
+            // Create a thread for UDP
 			Thread WorkerThread = new Thread(() => {
 				if (!FakePosition) {
 					UDP = new UdpClient(Port);
@@ -80,18 +79,24 @@ namespace ColliderGUI {
 					MarkerA = MarkerB = MarkerC = new Vector3(0, 100, 0);
 				}
 
-				while (true)
+				while (true) // The loop for the optotrack recieving program
 					ReceiveVectors();
 			});
-			WorkerThread.IsBackground = true;
-			WorkerThread.Start();
+			WorkerThread.IsBackground = true; // with this the thread stops when closing the GUI
+			WorkerThread.Start(); // start the thread
+        
 		}
 
 		public static byte[] ReceiveRaw() {
-			IPEndPoint Sender = new IPEndPoint(IPAddress.Any, Port);
-			return UDP.Receive(ref Sender);
+			IPEndPoint Sender = new IPEndPoint(IPAddress.Any, Port); // IPAddres.Any is for the local machine. It means it should listen to on all available network cards
+		    return UDP.Receive(ref Sender); // If an IP filter is needed, add code to compare Sender.Address or something like that... (find online)
+
 		}
 
+        /// <summary>
+        /// Average out the position of the 3 markers on the camera.
+        /// </summary>
+        /// <returns></returns>
 		public static Vector3 GetPos() {
 			// TODO: ?
 			//return ((MarkerA + MarkerB + MarkerC) / 3) - new Vector3(-83, 0, -215);
@@ -107,12 +112,14 @@ namespace ColliderGUI {
 			if (FakePosition)
 				return Vector3.Normalize(new Vector3(-1, 0.3f, 0.5f));
 
-			Vector3 U = MarkerB - MarkerA;
-			Vector3 V = MarkerC - MarkerA;
+			Vector3 U = MarkerB - MarkerA; // Get vector from A to B
+			Vector3 V = MarkerC - MarkerA; // Get vector from A to C
 
+            // Manually calculate the cross product of U an V
 			float X = U.Y * V.Z - U.Z * V.Y;
 			float Y = U.Z * V.X - U.X * V.Z;
 			float Z = U.X * V.Y - U.Y * V.X;
+            // Normalize the cross product and return the normal
 			return Vector3.Normalize(new Vector3(X, Y, Z));
 		}
 
@@ -122,7 +129,7 @@ namespace ColliderGUI {
 		}
 
 		public static void GetRotationAngles(out float Yaw, out float Pitch, out float Roll) {
-			GetNormal().NormalToPitchYaw(out Pitch, out Yaw);
+			GetNormal().NormalToPitchYaw(out Pitch, out Yaw); // Get Yaw and pitch from the normal
 			if (float.IsNaN(Pitch))
 				Pitch = 0;
 			if (float.IsNaN(Yaw))
@@ -130,6 +137,7 @@ namespace ColliderGUI {
 
 			Matrix4x4.Invert(Matrix4x4.CreateFromYawPitchRoll(Yaw, Pitch, 0), out Matrix4x4 InvYawPitch);
 
+            //Used to calculate the roll. From the marker positions and the Yaw and pitch angles
 			Vector3 A = Vector3.Transform(MarkerA, InvYawPitch);
 			Vector3 B = Vector3.Transform(MarkerB, InvYawPitch);
 			Vector3 C = Vector3.Transform(MarkerC, InvYawPitch);
@@ -169,13 +177,13 @@ namespace ColliderGUI {
 			//Console.WriteLine(Bytes.Length);
 
 			Vector3* Vectors = stackalloc Vector3[3];
-			Marshal.Copy(Bytes, 0, new IntPtr(Vectors), 3 * 3 * sizeof(float));
+			Marshal.Copy(Bytes, 0, new IntPtr(Vectors), 3 * 3 * sizeof(float)); // Create vectors from bytes recieved over UDP
 
-			Vector3 A = ABuffer.PushGetAverage(Vectors[0] + Program.OptotrakOffset);
+			Vector3 A = ABuffer.PushGetAverage(Vectors[0] + Program.OptotrakOffset); // Method in CircularVectorBuffer class. This basically performs the running average filter
 			Vector3 B = BBuffer.PushGetAverage(Vectors[1] + Program.OptotrakOffset);
 			Vector3 C = CBuffer.PushGetAverage(Vectors[2] + Program.OptotrakOffset);
 
-			if (IsVisible(A))
+			if (IsVisible(A)) // Checks for marker visibility. If it is not the last value is used.
 				MarkerA = A.YZX();
 
 			if (IsVisible(B))
