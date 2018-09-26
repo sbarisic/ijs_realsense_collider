@@ -50,7 +50,7 @@ namespace ColliderGUI {
 			Console.WriteLine(ConsoleColor.Green, "F5 - Move camera to RealSense position");
 
 			Vector2 Res = RWnd.GetDesktopResolution() * 0.9f;
-			RWnd = new RWnd((int)Res.X, (int)Res.Y, nameof(ColliderGUI));
+			RWnd = new RWnd((int)Res.X, (int)Res.Y, nameof(ColliderGUI)); // Create the window of the GUI
 
 			Console.WriteLine(ConsoleColor.Green, "Running {0}", RenderAPI.Version);
 			Console.WriteLine(ConsoleColor.Green, RenderAPI.Renderer);
@@ -104,7 +104,7 @@ namespace ColliderGUI {
 			SetupCamera();
 			LoadAssets();
 
-			Gfx.PointSize(5);
+			Gfx.PointSize(5); // Point size of the verteces
 		}
 
 		static void SetupCamera() {
@@ -113,7 +113,7 @@ namespace ColliderGUI {
 
 			Cam.SetPerspective(RWnd.WindowSize.X, RWnd.WindowSize.Y);
 
-			Cam.Position = new Vector3(-1167.559f, 952.6618f, 278.9347f);
+			Cam.Position = new Vector3(-1167.559f, 952.6618f, 278.9347f); // Default spawn position of the camera
 			Cam.LookAt(new Vector3(-Treadmill_X / 2, 0, Treadmill_Z));
 		}
 
@@ -168,6 +168,10 @@ namespace ColliderGUI {
 			Points.PrimitiveType = PrimitiveType.Points;
 		}
 
+        /// <summary>
+        /// The basic render loop of a graphics application.
+        /// </summary>
+        /// <returns></returns>
 		public static bool Tick() {
 			if (SWatch == null)
 				SWatch = Stopwatch.StartNew();
@@ -198,7 +202,7 @@ namespace ColliderGUI {
 				Cam.Position += Cam.ToWorldNormal(Vector3.Normalize(MoveVec)) * MoveSpeed * Dt;
 
 			if (Program.RenderVoxels)
-				Voxels.Update();
+				Voxels.Update(); 
 		}
 
 		static void DrawPin(Texture T, Vector3 Pos) {

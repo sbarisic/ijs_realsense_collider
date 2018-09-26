@@ -77,7 +77,7 @@ namespace ColliderGUI {
 			CameraHeight = new Vector3(0, PelvisHeight, 0); // the distance from the floor to the camera
 
 			Console.Spawn(Args.Contains("--console") || SpawnConsole);
-
+            
 			OptotrakClient.Init(40023); // initializes optotrack client and starts a thread for it. Starts also a thread for UDP (on port 40023)
             LegClient.Init(40024); // The same as above but for MVN Analyze
 
