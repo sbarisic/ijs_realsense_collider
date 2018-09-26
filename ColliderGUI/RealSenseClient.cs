@@ -10,6 +10,8 @@ using FishGfx.RealSense;
 using FishGfx;
 using System.Diagnostics;
 using FishGfx.Graphics.Drawables;
+using System.Net.Sockets;
+using System.Net;
 
 namespace ColliderGUI {
 	public static unsafe class RealSenseClient {
@@ -17,6 +19,7 @@ namespace ColliderGUI {
 
 		static int W;
 		static int H;
+		static Socket CollisionSenderSocket;
 
 		public static bool Ready = false;
 
@@ -32,14 +35,14 @@ namespace ColliderGUI {
 				InitInternal(); // Run InitInternal directly
 		}
 
-        /// <summary>
-        /// 
-        /// </summary>
+		/// <summary>
+		/// 
+		/// </summary>
 		static void InitInternal() {
 			Console.WriteLine(ConsoleColor.DarkCyan, "Starting RealSense");
 
 			if (!FakePosition) {
-                // The variable Resolution contains all available combinations of resolutions, formats sensors, etc. you can get from the camera.
+				// The variable Resolution contains all available combinations of resolutions, formats sensors, etc. you can get from the camera.
 				IEnumerable<FrameData> Resolutions = RealSenseCamera.QueryResolutions().OrderBy((Data) => -Data.Framerate); //  Resolutions is a list of frame data which contains the sensors and the resolutions. Basically all the possible formats/outputs of the camera. Depth,ARGB, etc. in different resolutions.
 				IEnumerable<FrameData> DepthResolutions = Resolutions.Where((Data) => Data.Type == FrameType.Depth); // Selects the resolutions/formats for depth frame type
 
@@ -52,7 +55,7 @@ namespace ColliderGUI {
 				//int ReqW = 1280;
 				//int ReqH = 720;
 
-                // From the available resolutions/formats pick only the one that we want.
+				// From the available resolutions/formats pick only the one that we want.
 				FrameData DepthRes = DepthResolutions.Where((Data) => Data.Width == ReqW && Data.Height == ReqH && Data.Format == FrameFormat.Z16).First();
 				FrameData ColorRes = Resolutions.Where((Data) => Data.Width == ReqW && Data.Height == ReqH && Data.Format == FrameFormat.Rgb8).First();
 
@@ -61,7 +64,7 @@ namespace ColliderGUI {
 
 				Console.WriteLine(ConsoleColor.DarkCyan, "RealSense running at {0}x{1}", W, H);
 
-                // This options were copied from the Intel RealSense Viewer. The demo program to connect to the camera...
+				// This options were copied from the Intel RealSense Viewer. The demo program to connect to the camera...
 				RealSenseCamera.SetOption(DepthRes, RealSenseOption.VisualPreset, 1); //4
 				RealSenseCamera.SetOption(DepthRes, RealSenseOption.EmitterEnabled, 0); // This enables/disables the IR pattern projector on the camera. Curently turned off, because it interfeers with the ototrack cameras.
 				RealSenseCamera.SetOption(DepthRes, RealSenseOption.EnableAutoExposure, 1);
@@ -94,12 +97,12 @@ namespace ColliderGUI {
 			}
 		}
 
-        /// <summary>
-        /// Loop to query data from the Realsense camera with RealSenseCamera.PollForFrames
-        /// </summary>
+		/// <summary>
+		/// Loop to query data from the Realsense camera with RealSenseCamera.PollForFrames
+		/// </summary>
 		public static void Loop() {
-            // Custom made wrapper funtion to poll for frames (point cloud) from the Real Sense Camera.
-            if (Program.RealSenseEnabled && RealSenseCamera.PollForFrames(null, OnPointCloud)) {
+			// Custom made wrapper funtion to poll for frames (point cloud) from the Real Sense Camera.
+			if (Program.RealSenseEnabled && RealSenseCamera.PollForFrames(null, OnPointCloud)) {
 				if (!Ready) // This sets the variable ready to true after the first point cloud frame is recieved. Because other parts of the code cannot work until there is some data from the camera.
 					Ready = true;
 			}
@@ -161,9 +164,9 @@ namespace ColliderGUI {
 					Voxels.SetVoxel(WorldPos, new VoxelEntry(VoxelType.Solid, Vert.Color)); // If any vertx is in the volume of voxels, set the corresponding voxel as solid and the same color as the vertex.
 				}
 
-                //This is the "Collision detection". The function Voxels.Ray takes in 2 position arguments and a function as an argument (the (X,Y,Z)... part). Search for delegate :) 
+				//This is the "Collision detection". The function Voxels.Ray takes in 2 position arguments and a function as an argument (the (X,Y,Z)... part). Search for delegate :) 
 				RightLegCollides = !Voxels.Ray(LegClient.R_Start, LegClient.R_End, (X, Y, Z) => {
-                    // The part inside this braces gets called multiple times, once for every voxel between the start and end position
+					// The part inside this braces gets called multiple times, once for every voxel between the start and end position
 					if (Voxels.IsSolid(X, Y, Z)) // Checks for actual collision, if there is a solid block at this point, return false, which stops the .Ray function.
 						return false;
 
@@ -179,6 +182,12 @@ namespace ColliderGUI {
 					return true;
 				});
 
+				if (CollisionSenderSocket == null)
+					CollisionSenderSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+				IPEndPoint EndPoint = new IPEndPoint(IPAddress.Parse(Program.CollisionReceiverAddress.Split(':')[0]), int.Parse(Program.CollisionReceiverAddress.Split(':')[1]));
+				CollisionSenderSocket.SendTo(new byte[] { ToByte(LeftLegCollides), ToByte(RightLegCollides) }, EndPoint);
+
 				if (!Program.MarkDirtyAuto)
 					Voxels.MarkDirty();
 			}
@@ -186,13 +195,13 @@ namespace ColliderGUI {
 			return null;
 		}
 
-        public static bool RightLegCollides;
-        public static bool LeftLegCollides;
+		public static bool RightLegCollides;
+		public static bool LeftLegCollides;
 
-        /// <summary>
-        /// Used to render the verteces. The points form the camera...
-        /// </summary>
-        /// <param name="Mesh"></param>
+		/// <summary>
+		/// Used to render the verteces. The points form the camera...
+		/// </summary>
+		/// <param name="Mesh"></param>
 		public static void GetVerts(ref Mesh3D Mesh) {
 			if (Program.RenderPoints) {
 				lock (Lck) {
@@ -200,6 +209,13 @@ namespace ColliderGUI {
 						Mesh.SetVertices(Points, PointCount, false, true);
 				}
 			}
+		}
+
+		static byte ToByte(bool B) {
+			if (B)
+				return 1;
+
+			return 0;
 		}
 	}
 }

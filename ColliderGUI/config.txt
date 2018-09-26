@@ -17,3 +17,5 @@ PelvisHeight = 1300
 OptotrakOffset_X = 0
 OptotrakOffset_Y = 800
 OptotrakOffset_Z = 0
+
+CollisionReceiverAddress = 127.0.0.1:666
